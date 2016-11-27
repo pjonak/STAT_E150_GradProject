@@ -1,5 +1,6 @@
 import os.path
 import csv
+import math
 
 
 #   Where is the data held?
@@ -7,10 +8,14 @@ import csv
 folderpath = "C:\\Users\\Paul\\Documents\\Coursework\\2016_3_HarExt_STATS_150_IntermediateStats\\GradProject\\dataAnalysis\\"
 
 #   When gathering the most recent data, how many years back can we search?
-maxDiffYear = 7
+maxDiffYear = 5
 
 # What is the most recent year we would be interested in?
 yearThresStart = 2015
+
+# Which file has abbreviation information?
+abbrev_filename = 'data_AirPollution_Anna.csv'
+
 
 
 
@@ -55,6 +60,50 @@ def adjCountryName(nameCountry: str) -> str:
         nameCountry = nameCountry[0:nameCountry.index("(") - 1]
     return nameCountry
 # End of adjCountryName
+###############################################################################
+###############################################################################
+###############################################################################
+def loadData_abbrev(filepath: str) -> list:
+    dat_abbrev_raw = loadData_csv(filepath)
+    
+    if isinstance(dat_abbrev_raw,list) and dat_abbrev_raw[0] is not None:
+        dat_abbrev = [[None for x in range(2)]]
+        
+        # Expectation is country name to be column 0
+        # and country abbreviation to be column 1
+        for iRow in range(1,len(dat_abbrev_raw)):
+            # Have data in this row?
+            if len(dat_abbrev_raw[iRow]) > 1:
+                # Yes, have data
+                # Have data in abbreviation column?
+                if dat_abbrev_raw[iRow][1] is not None:
+                    # Get potential country name
+                    nameCountry = dat_abbrev_raw[iRow][0]
+                    
+                    # Adjust
+                    nameCountry = adjCountryName(nameCountry)
+                    
+                    # Find WHO match
+                    for idxWHO in range(1, len(dat_WHO_country)):
+                        if nameCountry == dat_WHO_country[idxWHO][idxWHO_country]:
+                            # Found match by name
+                            
+                            abbrevCountry = dat_abbrev_raw[iRow][1]
+
+                            # Have a duplicate problem
+                            if abbrevCountry != dat_abbrev[-1][1]:
+                                if dat_abbrev[0][0] is None:
+                                    dat_abbrev[0][0] = nameCountry
+                                    dat_abbrev[0][1] = abbrevCountry
+                                else:
+                                    dat_abbrev.append([None for x in range(2)])
+                                    dat_abbrev[-1][0] = nameCountry
+                                    dat_abbrev[-1][1] = abbrevCountry
+                           
+        return dat_abbrev
+    else:
+        return [None]
+# End of loadData_abbrev
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -156,7 +205,7 @@ def getData_struct10(dat: list, iDS: int,
         I_new = False
         if idxRaw == 1:
             I_new = True
-        elif dat_raw[idxRaw][idxRaw_country] !=                 dat_raw[idxRaw - 1][idxRaw_country]:
+        elif dat_raw[idxRaw][idxRaw_country] != dat_raw[idxRaw - 1][idxRaw_country]:
             I_new = True
 
         if I_new:
@@ -732,12 +781,58 @@ def getData_continent(dat: list, iDS: int,
                             dat[iYr][1][idxDat_country][idxDat_dataset] = curData
 
     return dat
-    
-    
 # End of getData_continent
 ###############################################################################
 ###############################################################################
 ###############################################################################
+def getData_temperature(dat: list, iDS: int,
+                         dat_raw: list, dat_abbrev: list) -> list:
+    # Country abbrev given in column 1
+    # Data given in column 2
+    for iRow in range(1,len(dat_raw)):
+        if len(dat_raw[iRow]) > 1:
+            abbrevCountry = dat_raw[iRow][1]
+            print(abbrevCountry)
+            
+            for iAbbrev in range(0,len(dat_abbrev)):
+                if abbrevCountry == dat_abbrev[iAbbrev][1]:
+                    nameCountry = dat_abbrev[iAbbrev][0]
+
+                    curData = dat_raw[iRow][2]
+
+                    # What year?
+                    # Assume 2014 for now
+                    curYear = 2014
+                    
+                    
+                    # Get country code
+                    for idxWHO in range(1, len(dat_WHO_country)):
+                        if nameCountry == dat_WHO_country[idxWHO][idxWHO_country]:
+                            # Found match by name
+                            #   Find match in dat for code
+                            codeCountry = dat_WHO_country[idxWHO][idxWHO_code]
+                            for iCode in range(len(listCountryCode)):
+                                if codeCountry == listCountryCode[iCode]:
+                    
+                                    idxDat = yearThresStart - curYear
+                                    idxDat_country = 1 + iCode
+                                    idxDat_dataset = 2 + iDS
+                                    
+                                    dat[idxDat][1][idxDat_country][idxDat_dataset] = curData
+
+                                    break
+                            break
+
+                    break
+            
+            
+    return dat
+# End of getData_temperature
+###############################################################################
+###############################################################################
+###############################################################################
+
+
 
 
 
@@ -799,10 +894,12 @@ def getData_continent(dat: list, iDS: int,
 #       50 = FAO_Share Of Dietary Energy Supply From Cereals etc
 #       51 = FAO_Average Protein Supply
 #       52 = FAO_Political stability and absence of violence/terrorism
+#       53 = Air Pollution (Anna)
+#       54 = Temperature (Anna)
 
 
 
-nDataset = 52
+nDataset = 54
 labelIndicator = [None for x in range(nDataset)]
 codeIndicator = [None for x in range(nDataset)]
 filename = [None for x in range(nDataset)]
@@ -1448,6 +1545,25 @@ stringIndicator[iDS] = "Political stability and absence of violence/terrorism (i
 structData[iDS] = 30
 
 
+iDS = iDS+1
+#       Air Pollution
+labelIndicator[iDS] = "Air Pollution"
+codeIndicator[iDS] = 0
+filename[iDS] = 'data_AirPollution_Anna.csv'
+idxRaw_country[iDS] = 0 # Column Country
+idxRaw_year[iDS] = 8 # Row Year
+idxRaw_data[iDS] = 3 # Column where data interest
+
+structData[iDS] = 40
+
+
+iDS = iDS+1
+#       Annual Temperature
+labelIndicator[iDS] = "Temperature"
+codeIndicator[iDS] = 0
+filename[iDS] = 'data_Temp_Anna.csv'
+
+structData[iDS] = 00
 
 
 
@@ -1457,6 +1573,10 @@ structData[iDS] = 30
 dat_WHO_country = loadData_csv(folderpath + "quandl_WHO_codeCountry.csv")
 idxWHO_country = 0
 idxWHO_code = 1
+
+
+# Grab abbreviation data
+dat_abbrev = loadData_abbrev(folderpath + abbrev_filename)
 
 
 
@@ -1568,6 +1688,9 @@ for iDS in range(nDataset):
             #   Continents
             if len(labelIndicator[iDS]) > 8 and labelIndicator[iDS][0:9] == "Continent":
                 dat = getData_continent(dat, iDS, dat_raw, stringIndicator[iDS])
+            
+            elif len(labelIndicator[iDS]) == 11 and labelIndicator[iDS][0:12] == "Temperature":
+                dat = getData_temperature(dat, iDS, dat_raw, dat_abbrev)
 
 
 
@@ -1961,9 +2084,9 @@ if haveData:
             hWrite.writerow(rDat3[iRow])
     
     
-    
-    
-    
+print("Abbreviation data")
+print(dat_abbrev)
+dat_abbrev = loadData_abbrev(folderpath + abbrev_filename)
     
     
     

@@ -43,19 +43,26 @@ def loadData_csv(filepath: str) -> list:
 ###############################################################################
 def adjCountryName(nameCountry: str) -> str:
 
-    nameCountry = nameCountry.lstrip()
+    nameCountry = nameCountry.strip()
+    
+    if len(nameCountry) > 3 and nameCountry[0:4] == "The ":
+        nameCountry = nameCountry[5:]
 
     if len(nameCountry) > 6 and nameCountry[0:6] == "United":
         if len(nameCountry) >= 12 and nameCountry[7:13] == "States":
             nameCountry = "USA"
         elif len(nameCountry) >= 13 and nameCountry[7:14] == "Kingdom":
             nameCountry = "UK"
+        elif len(nameCountry) > 10 and nameCountry[7:11] == "Arab":
+            nameCountry = "UAE"
     elif nameCountry == "Russian Federation":
         nameCountry = "Russia"
     elif nameCountry == "Slovakia":
         nameCountry = "Slovak Republic"
     elif nameCountry == "Syrian Arab Republic":
         nameCountry = "Syria"
+    elif nameCountry == "Cote d'Ivoire":
+        nameCountry = "Ivory Coast"
     elif "(" in nameCountry:
         nameCountry = nameCountry[0:nameCountry.index("(") - 1]
     return nameCountry
@@ -753,6 +760,7 @@ def getData_continent(dat: list, iDS: int,
         nameCountry = dat_raw[iRow][0]
 
         nameCountry = adjCountryName(nameCountry)
+        
             
         # Make sure country exists within WHO country list
         for idxWHO in range(1, len(dat_WHO_country)):
@@ -773,9 +781,15 @@ def getData_continent(dat: list, iDS: int,
                         if dat_raw[iRow][1] == stringIndicator:
                             # Continent match found
                             curData = 1
+                            
                         else:
                             curData = 0
                             
+#                        if nameCountry == "Chile":
+#                            print(nameCountry)
+#                            print(stringIndicator)
+#                            print(dat_raw[iRow][1])
+#                            print(curData)
                             
                         for iYr in range(0,len(dat)):
                             dat[iYr][1][idxDat_country][idxDat_dataset] = curData
@@ -792,7 +806,6 @@ def getData_temperature(dat: list, iDS: int,
     for iRow in range(1,len(dat_raw)):
         if len(dat_raw[iRow]) > 1:
             abbrevCountry = dat_raw[iRow][1]
-            print(abbrevCountry)
             
             for iAbbrev in range(0,len(dat_abbrev)):
                 if abbrevCountry == dat_abbrev[iAbbrev][1]:
@@ -899,6 +912,13 @@ def getData_temperature(dat: list, iDS: int,
 
 
 
+
+iRange_continents = [39,40,41,42,43,44,45,46,47]
+iRange_eduPrograms = [32,33,34,35,36,37]
+iRange_population = 31
+
+
+
 nDataset = 54
 labelIndicator = [None for x in range(nDataset)]
 codeIndicator = [None for x in range(nDataset)]
@@ -908,6 +928,8 @@ idxRaw_year = [None for x in range(nDataset)] # Column Year
 idxRaw_data = [None for x in range(nDataset)] # Data of interest
 idxRaw_indicator = [None for x in range(nDataset)] # Column indicator
 stringIndicator = [None for x in range(nDataset)] # Use if indicators are interspersed
+
+AdjByPop = [None for x in range(nDataset)] # Adjust data by population?
 
 structData = [None for x in range(nDataset)]
 # 00 = special case
@@ -927,6 +949,7 @@ structData = [None for x in range(nDataset)]
 
 iDS = 0
 #       Under Five Mortality
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "Under Five Mortality (Probability)"
 codeIndicator[iDS] = 8
 filename[iDS] = 'data_UnderFiveMortality.csv'
@@ -939,6 +962,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Physician Density
+#           Already adjusted for population
 labelIndicator[iDS] = "Physician Density"
 codeIndicator[iDS] = 52
 filename[iDS] = 'data_PhysicianDensity.csv'
@@ -951,6 +975,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       EconomicFreedom
+#           Index therefore no population adjustment
 labelIndicator[iDS] = "EconomicFreedom"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_EconomicFreedom.csv'
@@ -963,6 +988,7 @@ structData[iDS] = 20
 
 iDS = iDS+1
 #       Years of schooling (Both Sexes)
+#           Unrelated to population
 labelIndicator[iDS] = "YearsSchooling_BothSexes"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_YearsOfSchool_William.csv'
@@ -977,6 +1003,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       Years of schooling (Female)
+#           Unrelated to population
 labelIndicator[iDS] = "YearsSchooling_Female"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_YearsOfSchool_William.csv'
@@ -991,6 +1018,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       Years of schooling (Male)
+#           Unrelated to population
 labelIndicator[iDS] = "YearsSchooling_Male"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_YearsOfSchool_William.csv'
@@ -1005,6 +1033,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       Mean BMI (both sexes)
+#           Unrelated to population
 labelIndicator[iDS] = "MeanBMI_BothSexes"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_MeanBMI_Eric.csv'
@@ -1019,6 +1048,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       Mean BMI (female)
+#           Unrelated to population
 labelIndicator[iDS] = "MeanBMI_Female"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_MeanBMI_Eric.csv'
@@ -1033,6 +1063,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       Mean BMI (male)
+#           Unrelated to population
 labelIndicator[iDS] = "MeanBMI_Male"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_MeanBMI_Eric.csv'
@@ -1047,6 +1078,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       Soft Drinks (thousand hectolitres)
+#           Needs population adjustment
 labelIndicator[iDS] = "SoftDrinks_Hectolitres_1000x"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_SoftDrinks_Anna.csv'
@@ -1056,11 +1088,13 @@ idxRaw_data[iDS] = 3 # Data of interest
 idxRaw_indicator[iDS] = 2 # Column indicator
 stringIndicator[iDS] = "Thousand hectolitres"
 
+AdjByPop[iDS] = 1
 structData[iDS] = 30
 
 
 iDS = iDS+1
 #       Insufficient Activity, age standardized (both sexes)
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "Insuff_Activity_BothSexes"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_InsufficientActivity_Anna.csv'
@@ -1073,6 +1107,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Insufficient Activity, age standardized (female)
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "Insuff_Activity_Female"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_InsufficientActivity_Anna.csv'
@@ -1085,6 +1120,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Insufficient Activity, age standardized (Male)
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "Insuff_Activity_Male"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_InsufficientActivity_Anna.csv'
@@ -1097,6 +1133,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Gross National Income, per capita
+#           Already adjusted by populution
 labelIndicator[iDS] = "NationalIncome"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_GrossNationalIncome_Anna.csv'
@@ -1109,6 +1146,7 @@ structData[iDS] = 40
 
 iDS = iDS+1
 #       Alcohol Consumption, litres
+#           Already adjusted by population
 labelIndicator[iDS] = "AlcoholConsumption_Litres"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_Alochol_Anna.csv'
@@ -1121,6 +1159,7 @@ structData[iDS] = 40
 
 iDS = iDS+1
 #       Improved Water Exposure, Rural
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "ImprovedWater_Rural"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_ImprovedWater_William.csv'
@@ -1133,6 +1172,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Improved Water Exposure, Urban
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "ImprovedWater_Urban"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_ImprovedWater_William.csv'
@@ -1145,6 +1185,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Improved Water Exposure, Total
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "ImprovedWater_Total"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_ImprovedWater_William.csv'
@@ -1157,6 +1198,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Life Expectancy at Birth, Both Sexes
+#           Unrelated to population
 labelIndicator[iDS] = "LifeExpectancy_Birth_BothSexes"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_LifeExpectancy_William.csv'
@@ -1169,6 +1211,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Life Expectancy at Birth, Female
+#           Unrelated to population
 labelIndicator[iDS] = "LifeExpectancy_Birth_Female"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_LifeExpectancy_William.csv'
@@ -1181,6 +1224,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Life Expectancy at Birth, Male
+#           Unrelated to population
 labelIndicator[iDS] = "LifeExpectancy_Birth_Male"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_LifeExpectancy_William.csv'
@@ -1193,6 +1237,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Life Expectancy at 60, BothS exes
+#           Unrelated to population
 labelIndicator[iDS] = "LifeExpectancy_Birth_BothSexes"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_LifeExpectancy_William.csv'
@@ -1205,6 +1250,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Life Expectancy at 60, Female
+#           Unrelated to population
 labelIndicator[iDS] = "LifeExpectancy_Birth_Female"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_LifeExpectancy_William.csv'
@@ -1217,6 +1263,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Life Expectancy at 60, Male
+#           Unrelated to population
 labelIndicator[iDS] = "LifeExpectancy_Birth_Male"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_LifeExpectancy_William.csv'
@@ -1229,6 +1276,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       GDP per capita
+#           Already adjusted
 labelIndicator[iDS] = "GDP"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_GDP_Ryan.csv'
@@ -1241,6 +1289,7 @@ structData[iDS] = 40
 
 iDS = iDS+1
 #       Household Consumption Expenditure
+#           Unrelated to population
 labelIndicator[iDS] = "HouseholdConsumption"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_HHC_Ryan.csv'
@@ -1253,6 +1302,7 @@ structData[iDS] = 40
 
 iDS = iDS+1
 #       % Women in Parliament
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "WomenInParliament"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_WomenInParliament.csv'
@@ -1265,6 +1315,7 @@ structData[iDS] = 40
 
 iDS = iDS+1
 #       % Urbanization
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "Urbanization_Percent"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_Urbanization.csv'
@@ -1279,6 +1330,7 @@ structData[iDS] = 41
 
 iDS = iDS+1
 #       Happiness, Avg [Life Ladder]
+#           Index therefore no population adjustment
 labelIndicator[iDS] = "Happiness_Avg"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_Happiness.csv'
@@ -1291,6 +1343,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Happiness, Freedom to Make Life Choices
+#           Index therefore no population adjustment
 labelIndicator[iDS] = "ChoiceFreedom"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_Happiness.csv'
@@ -1303,6 +1356,7 @@ structData[iDS] = 10
 
 iDS = iDS+1
 #       Total Population
+#           No population adjustment
 labelIndicator[iDS] = "Population"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_Population.csv'
@@ -1317,6 +1371,7 @@ structData[iDS] = 41
 
 iDS = iDS+1
 #       Have program to reduce unhealthy diet
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "HaveProgram_BadDiet"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_EduPrograms_William.csv'
@@ -1331,6 +1386,7 @@ structData[iDS] = 42
 
 iDS = iDS+1
 #       Have program to reduce physical inactivity
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "HaveProgram_PhysicalInactivity"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_EduPrograms_William.csv'
@@ -1345,6 +1401,7 @@ structData[iDS] = 42
 
 iDS = iDS+1
 #       Have program to reduce harmful use of alcohol
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "HaveProgram_Alochol"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_EduPrograms_William.csv'
@@ -1359,6 +1416,7 @@ structData[iDS] = 42
 
 iDS = iDS+1
 #       Have program to reduce cardiovascular disease
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "HaveProgram_CVD"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_EduPrograms_William.csv'
@@ -1373,6 +1431,7 @@ structData[iDS] = 42
 
 iDS = iDS+1
 #       Have program to reduce diabetes
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "HaveProgram_Diabetes"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_EduPrograms_William.csv'
@@ -1387,6 +1446,7 @@ structData[iDS] = 42
 
 iDS = iDS+1
 #       Have program to reduce tobacco use
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "HaveProgram_Tobacco"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_EduPrograms_William.csv'
@@ -1401,6 +1461,7 @@ structData[iDS] = 42
 
 iDS = iDS+1
 #       McDonalds
+#           Needs population adjustment
 labelIndicator[iDS] = "McDonalds"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_McDonalds_Anna.csv'
@@ -1408,67 +1469,77 @@ idxRaw_country[iDS] = 0 # Column Country
 idxRaw_year[iDS] = 2012 # Given Year
 idxRaw_data[iDS] = 2 # Column data
 
+AdjByPop[iDS] = 1
 structData[iDS] = 1
 
 
 iDS = iDS+1
-#       Continents
+#       Continents - Africa
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "Continent_Africa"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_continents.csv'
 stringIndicator[iDS] = "Africa"
 
 iDS = iDS+1
-#       Continents
+#       Continents - Asia
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "Continent_Asia"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_continents.csv'
 stringIndicator[iDS] = "Asia"
 
 iDS = iDS+1
-#       Continents
-labelIndicator[iDS] = "Continent_Carribbean"
+#       Continents - Caribbean
+#           Boolean therefore no population adjustment
+labelIndicator[iDS] = "Continent_Caribbean"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_continents.csv'
-stringIndicator[iDS] = "Carribbean Islands"
+stringIndicator[iDS] = "Caribbean Islands"
 
 iDS = iDS+1
-#       Continents
+#       Continents - Europe
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "Continent_Europe"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_continents.csv'
 stringIndicator[iDS] = "Europe"
 
 iDS = iDS+1
-#       Continents
+#       Continents - Middle East
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "Continent_MiddleEast"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_continents.csv'
 stringIndicator[iDS] = "Middle East"
 
 iDS = iDS+1
-#       Continents
+#       Continents - Central America
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "Continent_CentralAmerica"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_continents.csv'
 stringIndicator[iDS] = "Central America"
 
 iDS = iDS+1
-#       Continents
+#       Continents - North America
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "Continent_NorthAmerica"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_continents.csv'
 stringIndicator[iDS] = "North America"
 
 iDS = iDS+1
-#       Continents
+#       Continents - Oceania
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "Continent_Oceania"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_continents.csv'
 stringIndicator[iDS] = "Oceania"
 
 iDS = iDS+1
-#       Continents
+#       Continents - South America
+#           Boolean therefore no population adjustment
 labelIndicator[iDS] = "Continent_SouthAmerica"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_continents.csv'
@@ -1477,6 +1548,7 @@ stringIndicator[iDS] = "South America"
 
 iDS = iDS+1
 #       FAO_Domestic Food Price Index
+#           Index therefore no population adjustment
 labelIndicator[iDS] = "FoodPrice_Index"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_FAO.csv'
@@ -1491,6 +1563,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       FAO_Domestic Food Price Volatility
+#           Index therefore no population adjustment
 labelIndicator[iDS] = "FoodPrice_Volatility_Index"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_FAO.csv'
@@ -1505,6 +1578,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       FAO_Share Of Dietary Energy Supply From Cereals etc
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "DietaryEnergy_FromCerealsRootsTubers"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_FAO.csv'
@@ -1519,6 +1593,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       FAO_Share Of Dietary Energy Supply From Cereals etc
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "ProteinSupply_Avg_Daily_PerCapita"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_FAO.csv'
@@ -1533,6 +1608,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       FAO_Share Of Dietary Energy Supply From Cereals etc
+#           Percentage therefore no population adjustment
 labelIndicator[iDS] = "PoliticalStability_And_LackOfViolence_Index"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_FAO.csv'
@@ -1547,6 +1623,7 @@ structData[iDS] = 30
 
 iDS = iDS+1
 #       Air Pollution
+#           Index therefore no population adjustment
 labelIndicator[iDS] = "Air Pollution"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_AirPollution_Anna.csv'
@@ -1559,6 +1636,7 @@ structData[iDS] = 40
 
 iDS = iDS+1
 #       Annual Temperature
+#           No population adjustment
 labelIndicator[iDS] = "Temperature"
 codeIndicator[iDS] = 0
 filename[iDS] = 'data_Temp_Anna.csv'
@@ -1693,6 +1771,52 @@ for iDS in range(nDataset):
                 dat = getData_temperature(dat, iDS, dat_raw, dat_abbrev)
 
 
+                
+# Per Winnie request, create one variable for continent
+if isinstance(iRange_continents,list) and iRange_continents[0] is not None:
+    if nDataset >= max(iRange_continents):
+        
+        for iYr in range(0,len(dat)):
+            
+            dat[iYr][1][0].append("grpContinents")
+            
+            for iCountry in range(1,len(dat[iYr][1])):
+                iCol = 2+iRange_continents[0]
+                if dat[iYr][1][iCountry][iCol] is None:
+                    dat[iYr][1][iCountry].append(None)
+                else:
+                    dat[iYr][1][iCountry].append(0)
+                  
+                    for iContinent in range(0,len(iRange_continents)):
+                        
+                        iCol = 1+iRange_continents[iContinent]
+                        if dat[iYr][1][iCountry][iCol] == 1:
+                            dat[iYr][1][iCountry][-1] = iContinent+1
+                            break
+
+# Per Winnie request, create one variable for EducationalPrograms
+if isinstance(iRange_eduPrograms,list) and iRange_eduPrograms[0] is not None:
+    if nDataset >= max(iRange_eduPrograms):
+        
+        for iYr in range(0,len(dat)):
+            
+            dat[iYr][1][0].append("grpEduPrograms")
+            
+            # Do we have any data for this year?
+            for iCountry in range(1,len(dat[iYr][1])):
+                iCol = 2+iRange_eduPrograms[0]
+                if dat[iYr][1][iCountry][iCol] is None:
+                    dat[iYr][1][iCountry].append(None)
+                else:
+                    dat[iYr][1][iCountry].append(0)
+                       
+                    for iEduProgram in range(0,len(iRange_eduPrograms)):
+                        
+                        iCol = 1+iRange_eduPrograms[iEduProgram]
+                        if dat[iYr][1][iCountry][iCol] == 1:
+                            dat[iYr][1][iCountry][-1] = dat[iYr][1][iCountry][-1]+1
+                    
+    
 
 # Save data
 with open('testWrite3_allData.csv','w') as csvfile:
@@ -1865,15 +1989,68 @@ if haveData:
     
     
     
+
+
+
+
+
+
+
+
+    ###########################################################################
+    ###########################################################################
+    ###########################################################################
+    # Operation 3) Adjust by population
+    iCol_pop = 1+iRange_population
     
+    for iDS in range(0,nDataset):
+        if AdjByPop[iDS] is not None and int(AdjByPop[iDS]) == 1:
+            # Build new label
+            labelIndicator_new = "PerCapita_" + labelIndicator[iDS]
             
-    
-    
-    
+            # What column holds the original data?
+            iCol = 2+iDS
+            
+            adjFactor = 1
+            if len(labelIndicator[iDS]) > 4 and labelIndicator[iDS][0:4] == "Soft":
+                # 1000 hectolitres -> 1000 x 100 litres
+                adjFactor = 1000*100
+                labelIndicator_new = "PerCapita_SoftDrinks_Litres"
+                
+            elif len(labelIndicator[iDS]) > 4 and labelIndicator[iDS][0:4] == "McDo":
+                # Need to multiply by 10^8 otherwise too small
+                adjFactor = 100000000
+                labelIndicator_new = "PerCapita_McDonalds_Per10Million"
+                print(labelIndicator_new)
+                print(rDat2[0][iCol])
+            
+            # Build new column
+            rDat2[0].append(labelIndicator_new)
+            for iRow in range(1,len(rDat2)):
+                if rDat2[iRow][iCol] is None:
+                    rDat2[iRow].append(None)
+                elif rDat2[iRow][iCol_pop] is None:
+                    rDat2[iRow].append(None)
+                else:
+                    curData = float( rDat2[iRow][iCol] )
+                    
+                    popData = float( rDat2[iRow][iCol_pop] )
+                    
+                    newData = adjFactor*curData/popData
+                    rDat2[iRow].append(newData)
+                
+                
+                
+                
+                
+                
+                
+                
+                
     ###########################################################################
     ###########################################################################
     ###########################################################################
-    # Operation 3) Re-Organize such that BMI variables come first
+    # Operation 4) Re-Organize such that BMI variables come first
     
     # What are the new column indices for the BMI variables?
     iCol_BMI_new = copy.deepcopy(iCol_BMI)
@@ -1929,7 +2106,7 @@ if haveData:
     ###########################################################################
     ###########################################################################
     ###########################################################################
-    # Operation 4) Transform variables
+    # Operation 5) Transform variables
     #   McDonalds -> log
     #       Get dataset index
     iDS = 38
@@ -1955,12 +2132,31 @@ if haveData:
             curData = float( rDat3[iRow][iCol] )
             
             if curData <= 0:
-                rDat3[iRow].append(newData)
+                rDat3[iRow].append(None)
             else:
                 newData = math.log(curData)
                 rDat3[iRow].append(newData)
     
     
+    for iCol in range(iDS,len(rDat3[0])):
+        if len(rDat3[0][iCol]) > 10 and rDat3[0][iCol][0:10] == "PerCapita_":
+            if len(rDat3[0][iCol]) > 14 and rDat3[0][iCol][10:14] == "McDo":
+                
+                print("Transforming " + rDat3[0][iCol])
+                labelIndicator_new = "log(PerCapita_McDonalds)"
+                
+                rDat3[0].append(labelIndicator_new)
+                for iRow in range(1,len(rDat3)):
+                    if rDat3[iRow][iCol] is None:
+                        rDat3[iRow].append(None)
+                    else:
+                        curData = float( rDat3[iRow][iCol] )
+                        
+                        if curData <= 0:
+                            rDat3[iRow].append(None)
+                        else:
+                            newData = math.log(curData)
+                            rDat3[iRow].append(newData)
     
     
     
@@ -1989,7 +2185,7 @@ if haveData:
             curData = float( rDat3[iRow][iCol] )
             
             if curData <= 0:
-                rDat3[iRow].append(newData)
+                rDat3[iRow].append(None)
             else:
                 newData = math.log(curData)
                 rDat3[iRow].append(newData)
@@ -2019,7 +2215,7 @@ if haveData:
     ###########################################################################
     ###########################################################################
     ###########################################################################
-    # Operation 5) Remove variables with too little data
+    # Operation 6) Remove variables with too little data
     nCol_ignore = 2
     nRow_ignore = 1
 
@@ -2083,10 +2279,7 @@ if haveData:
             #   Write data
             hWrite.writerow(rDat3[iRow])
     
-    
-print("Abbreviation data")
-print(dat_abbrev)
-dat_abbrev = loadData_abbrev(folderpath + abbrev_filename)
+
     
     
     

@@ -197,61 +197,67 @@ def getData_struct10(dat: list, iDS: int,
     idxCountry_code = 1
     idxCountry_startIdx = 2
     idxCountry_endIdx = 3
+    
+    
+    
+    minColWidth = max(idxRaw_country,idxRaw_year,idxRaw_data)    
 
     #   Loop through raw data to get indices
     for idxRaw in range(1, len(dat_raw)):
-        # Do we have a new country or more data for the previous country?
-        #   Get country name and compare to previous entry
-        nameCountry = dat_raw[idxRaw][idxRaw_country]
-
-        #   Country name may need to be adjusted
-        #       e.g. Russian Federation -> Russia
-        nameCountry = adjCountryName(nameCountry)
-
-        #   New country?
-        I_new = False
-        if idxRaw == 1:
-            I_new = True
-        elif dat_raw[idxRaw][idxRaw_country] != dat_raw[idxRaw - 1][idxRaw_country]:
-            I_new = True
-
-        if I_new:
-            # Have a new country
-            #   Update storage matrix
-            iCountry = iCountry + 1
-            I_countryHasCode.append(0)
-            dataCountry.append([None for x in range(4)])
-
-            #   Find WHO country code
-            for idxWHO in range(1, len(dat_WHO_country)):
-                nameCountry_WHO = dat_WHO_country[idxWHO][idxWHO_country]
-
-                if nameCountry == nameCountry_WHO:
-                    # Found match
-                    #   Record and break the FOR loop (WHO country code)
-                    I_countryHasCode[iCountry] = 1
-                    dataCountry[iCountry][idxCountry_name] = nameCountry_WHO
-                    dataCountry[iCountry][idxCountry_code] = dat_WHO_country[idxWHO][idxWHO_code]
+        if len(dat_raw[idxRaw]) >= minColWidth:
+            
+            # Do we have a new country or more data for the previous country?
+            #   Get country name and compare to previous entry
+            nameCountry = dat_raw[idxRaw][idxRaw_country]
+    
+            #   Country name may need to be adjusted
+            #       e.g. Russian Federation -> Russia
+            nameCountry = adjCountryName(nameCountry)
+    
+            #   New country?
+            I_new = False
+            if idxRaw == 1:
+                I_new = True
+            elif dat_raw[idxRaw][idxRaw_country] != dat_raw[idxRaw - 1][idxRaw_country]:
+                I_new = True
+    
+            if I_new:
+                # Have a new country
+                #   Update storage matrix
+                iCountry = iCountry + 1
+                I_countryHasCode.append(0)
+                dataCountry.append([None for x in range(4)])
+    
+                #   Find WHO country code
+                for idxWHO in range(1, len(dat_WHO_country)):
+                    nameCountry_WHO = dat_WHO_country[idxWHO][idxWHO_country]
+    
+                    if nameCountry == nameCountry_WHO:
+                        # Found match
+                        #   Record and break the FOR loop (WHO country code)
+                        I_countryHasCode[iCountry] = 1
+                        dataCountry[iCountry][idxCountry_name] = nameCountry_WHO
+                        dataCountry[iCountry][idxCountry_code] = dat_WHO_country[idxWHO][idxWHO_code]
+                        dataCountry[iCountry][idxCountry_startIdx] = idxRaw  # Record starting index
+                        dataCountry[iCountry][idxCountry_endIdx] = idxRaw  # Record last index
+    
+                        break
+    
+                if I_countryHasCode[iCountry] == 0:
+                    # Warn user that this country name is not found in WHO dataset
+                    print(str(idxRaw) + " - " + nameCountry + " - No match")
+    
+                    dataCountry[iCountry][idxCountry_name] = nameCountry
+                    # No country code available
                     dataCountry[iCountry][idxCountry_startIdx] = idxRaw  # Record starting index
                     dataCountry[iCountry][idxCountry_endIdx] = idxRaw  # Record last index
-
-                    break
-
-            if I_countryHasCode[iCountry] == 0:
-                # Warn user that this country name is not found in WHO dataset
-                print(str(idxRaw) + " - " + nameCountry + " - No match")
-
-                dataCountry[iCountry][idxCountry_name] = nameCountry
-                # No country code available
-                dataCountry[iCountry][idxCountry_startIdx] = idxRaw  # Record starting index
+    
+            elif I_countryHasCode[iCountry] != 0:
                 dataCountry[iCountry][idxCountry_endIdx] = idxRaw  # Record last index
-
-        elif I_countryHasCode[iCountry] != 0:
-            dataCountry[iCountry][idxCountry_endIdx] = idxRaw  # Record last index
-
-        else:
-            dataCountry[iCountry][idxCountry_endIdx] = idxRaw  # Record last index
-
+    
+            else:
+                dataCountry[iCountry][idxCountry_endIdx] = idxRaw  # Record last index
+    
     # We have dataCountry, now what?
     #   dataCountry contains index ranges for each country
     #   We can now go through each year and see if the country has corresponding data
@@ -315,6 +321,75 @@ def getData_struct10(dat: list, iDS: int,
                                 break
     return dat
 # End of getData_struct10
+###############################################################################
+###############################################################################
+###############################################################################
+def getData_struct101(dat: list, iDS: int,
+                     dat_raw: list,
+                     idxRaw_country: int,
+                     idxRaw_year: int,
+                     idxRaw_data: int) -> list:
+    # Data is organized by country first, and by year secondly
+    #   There is no gender information
+
+    minColWidth = max(idxRaw_country,idxRaw_year,idxRaw_data)
+    
+    for iRow in range(1,len(dat_raw)):
+        # Check if indicator matches
+        if len(dat_raw[iRow]) >= minColWidth and len(dat_raw[iRow][idxRaw_year]) ==4:
+            
+            curYear = int( dat_raw[iRow][idxRaw_year] )
+            if curYear <= yearThresStart and curYear >= yearThresEnd:
+                nameCountry = dat_raw[iRow][idxRaw_country]
+    
+                nameCountry = adjCountryName(nameCountry)
+    
+                # Make sure country exists within WHO country list
+                for idxWHO in range(1, len(dat_WHO_country)):
+                    if nameCountry == dat_WHO_country[idxWHO][idxWHO_country]:
+                        # Found match by name
+                        #   Find match in dat for code
+                        codeCountry = dat_WHO_country[idxWHO][idxWHO_code]
+                        for iCode in range(len(listCountryCode)):
+                            if codeCountry == listCountryCode[iCode]:
+                                # Found match by code
+    
+                                # Define dat indicies
+                                idxDat = yearThresStart - curYear
+                                idxDat_country = 1 + iCode
+                                idxDat_dataset = 2 + iDS
+                                
+                                # Get data point / observation
+                                #   Some data sets report: "mean [95% CI]"
+                                #       ex: 91.1 [69.6-118.8]
+                                haveData = True
+                                if isinstance( dat_raw[iRow][idxRaw_data] ,str ):
+                                    try:
+                                        curData = dat_raw[iRow][idxRaw_data].split(' ', 1)[0]
+                                    except:
+                                        curData = dat_raw[iRow][idxRaw_data]
+    
+                                    try:
+                                        byteTest = curData[0].encode('utf-8')
+                                        if byteTest < b"0" or byteTest > b"9":
+                                            haveData = False
+                                    except:
+                                        haveData = False
+    
+                                else:
+                                    curData = dat_raw[iRow][idxRaw_data]
+    
+                                if haveData:
+                                    # Set data
+                                    dat[idxDat][1][idxDat_country][idxDat_dataset] = curData
+    
+                                break
+    
+                        break
+            
+            
+    return dat
+# End of getData_struct101
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -909,6 +984,7 @@ def getData_temperature(dat: list, iDS: int,
 #       52 = FAO_Political stability and absence of violence/terrorism
 #       53 = Air Pollution (Anna)
 #       54 = Temperature (Anna)
+#       55 = Calories Per Capita Per Day (Anna)
 
 
 
@@ -919,7 +995,7 @@ iRange_population = 31
 
 
 
-nDataset = 54
+nDataset = 55
 labelIndicator = [None for x in range(nDataset)]
 codeIndicator = [None for x in range(nDataset)]
 filename = [None for x in range(nDataset)]
@@ -937,6 +1013,7 @@ structData = [None for x in range(nDataset)]
 # 01 = organized by country, given year
 #
 # 10 = organized by country, then year (no gender)
+# 101 = updated version of 10
 # 11 = same as 10, but with gender
 #
 # 20 = organized by year, then country (no gender)
@@ -1644,6 +1721,21 @@ filename[iDS] = 'data_Temp_Anna.csv'
 structData[iDS] = 00
 
 
+iDS = iDS+1
+#       Calories Per Capita Per Day
+#           Already adjusted for population
+labelIndicator[iDS] = "Calories Per Capita Per Day"
+codeIndicator[iDS] = 52
+filename[iDS] = 'data_CaloriesPerCapitaPerDay_Anna.csv'
+idxRaw_country[iDS] = 1 # Column Country
+idxRaw_year[iDS] = 3 # Column Year
+idxRaw_data[iDS] = 4 # Data of interest
+
+structData[iDS] = 101
+
+
+
+
 
 
 
@@ -1721,6 +1813,11 @@ for iDS in range(nDataset):
 
         if structData[iDS] == 10:
             dat = getData_struct10(dat,iDS,dat_raw,
+                                   idxRaw_country[iDS],
+                                   idxRaw_year[iDS],
+                                   idxRaw_data[iDS] )
+        elif structData[iDS] == 101:
+            dat = getData_struct101(dat,iDS,dat_raw,
                                    idxRaw_country[iDS],
                                    idxRaw_year[iDS],
                                    idxRaw_data[iDS] )
